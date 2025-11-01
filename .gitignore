@@ -1,0 +1,41 @@
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.pnpm-debug.log
+.pnpm-lock.yaml  # if you don't want to commit lockfile (but usually you DO)
+
+# Environment variables
+.env
+.env.local
+.env.development
+.env.production
+
+# Build output
+dist/
+build/
+out/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+
+# IDE / Editor
+.DS_Store
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# macOS
+._*
+
+# Debugging
+debug.log
+
+# Coverage (if using Jest, etc.)
+coverage/
