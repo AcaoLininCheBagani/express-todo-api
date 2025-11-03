@@ -3,8 +3,14 @@ import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import morgan from 'morgan';
 import { Todo } from './models/Todo';
+const cors = require('cors');
 
 const app = express();
+app.use(cors({
+    origin: 'http://localhost:3000', // Allow only this origin
+    // methods: ['GET', 'POST'], // Allow specific HTTP methods
+    // allowedHeaders: ['Content-Type'], // Allow specific headers
+}))
 const PORT = parseInt(process.env.PORT || '8000', 10);
 const MONGODB_URI = process.env.MONGO_URI;
 
@@ -16,12 +22,6 @@ if (!MONGODB_URI) {
 // middleware
 app.use(morgan('dev'));
 app.use(express.json());
-
-// routes
-app.get('/api/hello', (req: Request, res: Response) => {
-    console.log(`Server running on http://localhost:${PORT}`);
-    res.json({ message: 'Hello from Express + TypeScript with pnpm!' });
-});
 
 // read
 app.get('/api/todos', async (_req: Request, res: Response) => {
