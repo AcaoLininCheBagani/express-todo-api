@@ -3,7 +3,7 @@ import express, { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import morgan from 'morgan';
 import { Todo } from './models/Todo';
-const cors = require('cors');
+import cors from 'cors';
 
 const app = express();
 app.use(cors({
