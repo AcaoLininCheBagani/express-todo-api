@@ -7,7 +7,7 @@ import cors from 'cors';
 
 const app = express();
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow only this origin
+    origin: ['http://localhost:3000', 'https://todo-tracker-app-ten.vercel.app'], // Allow only this origin
     // methods: ['GET', 'POST'], // Allow specific HTTP methods
     // allowedHeaders: ['Content-Type'], // Allow specific headers
 }))
@@ -22,6 +22,10 @@ if (!MONGODB_URI) {
 // middleware
 app.use(morgan('dev'));
 app.use(express.json());
+
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'OK', uptime: process.uptime() });
+});
 
 // read
 app.get('/api/todos', async (_req: Request, res: Response) => {
@@ -105,7 +109,7 @@ mongoose.connect(MONGODB_URI).then(() => {
     console.log('✅ Connected to MongoDB Atlas');
     console.log('✅ Connected to database:', mongoose.connection.name);
     app.listen(PORT, () => {
-        console.log(`✅ Server running on http://localhost:${PORT}`);
+        console.log(`✅ Server running on port ${PORT}`);
     });
 }).catch((err) =>{
     console.error('❌ MongoDB connection error:', err);
