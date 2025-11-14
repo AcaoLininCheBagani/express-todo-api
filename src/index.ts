@@ -107,8 +107,8 @@ app.delete('/api/todos/:id', async (req: Request, res: Response) => {
 mongoose.connect(MONGODB_URI).then(() => {
     console.log('✅ Connected to MongoDB Atlas');
     console.log('✅ Connected to database:', mongoose.connection.name);
-    app.listen('0.0.0.0', () => {
-        console.log(`✅ Server running on port  '0.0.0.0'`);
+    app.listen('10000', () => {
+        console.log(`✅ Server running on port  '10000'`);
     });
 }).catch((err) =>{
     console.error('❌ MongoDB connection error:', err);
