@@ -11,7 +11,6 @@ app.use(cors({
     // methods: ['GET', 'POST'], // Allow specific HTTP methods
     // allowedHeaders: ['Content-Type'], // Allow specific headers
 }))
-const PORT = parseInt(process.env.PORT || '8000', 10);
 const MONGODB_URI = process.env.MONGO_URI;
 
 if (!MONGODB_URI) {
@@ -108,8 +107,8 @@ app.delete('/api/todos/:id', async (req: Request, res: Response) => {
 mongoose.connect(MONGODB_URI).then(() => {
     console.log('✅ Connected to MongoDB Atlas');
     console.log('✅ Connected to database:', mongoose.connection.name);
-    app.listen(PORT, () => {
-        console.log(`✅ Server running on port ${PORT}`);
+    app.listen('0.0.0.0', () => {
+        console.log(`✅ Server running on port  '0.0.0.0'`);
     });
 }).catch((err) =>{
     console.error('❌ MongoDB connection error:', err);
