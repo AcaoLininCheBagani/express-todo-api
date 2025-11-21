@@ -6,6 +6,7 @@ export interface ITodo extends Document {
     title: string;
     completed: boolean;
     priority: Priority;
+    embedding: number[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -13,7 +14,8 @@ export interface ITodo extends Document {
 const todoSchema = new Schema<ITodo>({
     title: {type: String, required: true},
     completed: {type: Boolean, default: false},
-    priority: {type: String, enum:['low', 'medium', 'high'],default: 'high'}
+    priority: {type: String, enum:['low', 'medium', 'high'],default: 'high'},
+    embedding: {type: [Number], required: true}
 }, {
     timestamps: true
 })
