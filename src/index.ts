@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import morgan from 'morgan';
 import { Todo } from './models/Todo';
 import cors from 'cors';
+import { pipeline } from '@huggingface/transformers';
 
 const app = express();
 app.use(cors({
@@ -23,7 +24,7 @@ app.use(morgan('dev'));
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'OK', uptime: process.uptime() });
+    res.status(200).json({ status: 'OK', uptime: process.uptime() });
 });
 
 // read
@@ -33,14 +34,18 @@ app.get('/api/todos', async (_req: Request, res: Response) => {
         res.json(todos);
     } catch (error) {
         console.error('Read all error:', error);
-        res.status(500).json({ error: 'Failed to fetch todos'});
+        res.status(500).json({ error: 'Failed to fetch todos' });
     }
 })
 
 // create
 app.post('/api/todos', async (req: Request, res: Response) => {
+    const extractor = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
     try {
         const { title, completed, priority } = req.body;
+
+        const output = await extractor(title, { pooling: 'mean', normalize: true, precision: 'binary' });
+        const embeddings = Object.values(output.ort_tensor.data)
 
         if (!title || typeof title !== 'string') {
             return res.status(400).json({ error: 'Title is required and must be a string' });
@@ -49,7 +54,8 @@ app.post('/api/todos', async (req: Request, res: Response) => {
         const newTodo = new Todo({
             title,
             completed: completed ?? false,
-            priority
+            priority,
+            embedding: embeddings
         });
 
         const saveTodo = await newTodo.save();
@@ -66,42 +72,42 @@ app.patch('/api/todos/:id', async (req: Request, res: Response) => {
         const { id } = req.params;
         const { title, completed, priority } = req.body;
 
-        if(title !== undefined && (typeof title !== 'string' || title.trim() === '')){
-            return res.status(400).json({ error: 'Title must be a non-empty string'});
+        if (title !== undefined && (typeof title !== 'string' || title.trim() === '')) {
+            return res.status(400).json({ error: 'Title must be a non-empty string' });
         }
 
         const updatedTodo = await Todo.findByIdAndUpdate(
             id,
-            {title, completed, priority},
-            {new: true, runValidators: true}
+            { title, completed, priority },
+            { new: true, runValidators: true }
         );
 
-        if(!updatedTodo) {
-            return res.status(404).json({error: 'Todo not found'});
+        if (!updatedTodo) {
+            return res.status(404).json({ error: 'Todo not found' });
         }
 
         res.json(updatedTodo);
     } catch (error) {
         console.error('Update error:', error);
-        res.status(500).json({error: 'Failed to update todo'});
+        res.status(500).json({ error: 'Failed to update todo' });
     }
 })
 
 // delete
 app.delete('/api/todos/:id', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const deletedTodo = await Todo.findByIdAndDelete(id);
+    try {
+        const { id } = req.params;
+        const deletedTodo = await Todo.findByIdAndDelete(id);
 
-    if (!deletedTodo) {
-      return res.status(404).json({ error: 'Todo not found' });
+        if (!deletedTodo) {
+            return res.status(404).json({ error: 'Todo not found' });
+        }
+
+        res.json({ message: 'Todo deleted successfully', id: deletedTodo._id });
+    } catch (error) {
+        console.error('Delete error:', error);
+        res.status(500).json({ error: 'Failed to delete todo' });
     }
-
-    res.json({ message: 'Todo deleted successfully', id: deletedTodo._id });
-  } catch (error) {
-    console.error('Delete error:', error);
-    res.status(500).json({ error: 'Failed to delete todo' });
-  }
 });
 
 mongoose.connect(MONGODB_URI).then(() => {
@@ -110,7 +116,7 @@ mongoose.connect(MONGODB_URI).then(() => {
     app.listen('10000', () => {
         console.log(`✅ Server running on port  '10000'`);
     });
-}).catch((err) =>{
+}).catch((err) => {
     console.error('❌ MongoDB connection error:', err);
     process.exit(1);
 })
