@@ -5,10 +5,12 @@ import morgan from 'morgan';
 import { Todo } from './models/Todo';
 import cors from 'cors';
 import { pipeline } from '@huggingface/transformers';
-
+import multer from 'multer';
+import path from 'path';
+import fs from 'fs'
 const app = express();
 app.use(cors({
-    origin: ['http://localhost:3000', 'https://todo-tracker-app-ten.vercel.app'], // Allow only this origin
+    origin: ['http://localhost:3000', 'https://todo-tracker-app-ten.vercel.app', 'http://192.168.1.12:3000', 'http://192.168.1.15:3000'], // Allow only this origin
     // methods: ['GET', 'POST'], // Allow specific HTTP methods
     // allowedHeaders: ['Content-Type'], // Allow specific headers
 }))
@@ -26,7 +28,42 @@ app.use(express.json());
 app.get('/health', (_req, res) => {
     res.status(200).json({ status: 'OK', uptime: process.uptime() });
 });
+const upload = multer({ 
+    storage: multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, 'temp/'); // Make sure this directory exists
+        },
+        filename: (req, file, cb) => {
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+        }
+    }),
+    limits: { fileSize: 10 * 1024 * 1024 }
+});
 
+app.post('/api/stt', upload.single('file'), async (req: Request, res: Response) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No audio file provided' });
+        }
+
+        // Use the temporary file path
+        const filePath = req.file.path;
+        
+        const transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+        const output = await transcriber(filePath);
+        
+        // Clean up the temporary file
+        fs.unlinkSync(filePath);
+        
+        res.status(200).json({ 
+            text: output,
+        });
+    } catch (error) {
+        console.error('STT Error:', error);
+        res.status(500).json({ error: 'Transcription failed' });
+    }
+});
 // read
 app.get('/api/todos', async (_req: Request, res: Response) => {
     try {
