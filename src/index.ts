@@ -6,8 +6,10 @@ import { Todo } from "./models/Todo";
 import { User } from "./models/User";
 import cors from "cors";
 import bcrypt from "bcrypt";
+import { SignJWT } from "jose";
 
 const app = express();
+const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
 
 app.use(
   cors({
@@ -45,6 +47,19 @@ app.get("/api/todos", async (_req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to fetch todos" });
   }
 });
+
+const createJwtAuth = async (email: string, name: string): Promise<string> => {
+  const token = await new SignJWT({
+    email: email,
+    name: name,
+  })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .sign(JWT_SECRET);
+
+  return token;
+};
+
 // login
 app.post("/api/user-login", async (req: Request, res: Response) => {
   const { email, password } = req.body;
@@ -58,9 +73,13 @@ app.post("/api/user-login", async (req: Request, res: Response) => {
     if (!isMatch) {
       return res.status(401).json({ message: message });
     }
+
+    const tokenGen = await createJwtAuth(user.email, user.name);
+
     return res.json({
       message: "Login successful!",
       user: { id: user._id, name: user.name, email: user.email },
+      token: tokenGen,
     });
   } catch (error) {
     console.error("Create error:", error);
@@ -89,21 +108,20 @@ app.post("/api/user-create", async (req: Request, res: Response) => {
   }
 });
 
-
-
 // create todo
 app.post("/api/todos", async (req: Request, res: Response) => {
   try {
-    const { title, completed, priority } = req.body;
+    const { title, id, completed, priority } = req.body;
 
     if (!title || typeof title !== "string") {
       return res
         .status(400)
         .json({ error: "Title is required and must be a string" });
     }
- 
+
     const newTodo = new Todo({
       title,
+      userId: id,
       completed: completed ?? false,
       priority,
     });
@@ -161,7 +179,6 @@ app.delete("/api/todos/:id", async (req: Request, res: Response) => {
       message: "Todo deleted successfully",
       id: deletedTodo._id,
     });
-  
   } catch (error) {
     console.error("Delete error:", error);
     return res.status(500).json({ error: "Failed to delete todo" });
