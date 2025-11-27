@@ -38,9 +38,12 @@ app.get("/health", (_req, res) => {
 });
 
 // read
-app.get("/api/todos", async (_req: Request, res: Response) => {
+app.get("/api/todos", async (req: Request, res: Response) => {
+  const { id } = req.query;
   try {
-    const todos = await Todo.find().sort({ createdAt: -1 });
+    const todos = await Todo.find({ userId: id }).sort({
+      createdAt: -1,
+    });
     res.json(todos);
   } catch (error) {
     console.error("Read all error:", error);
